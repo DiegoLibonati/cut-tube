@@ -1,35 +1,35 @@
 services:
-  cuttube-api:
+  cut-tube-api:
     build:
-      context: ./cuttube-api
+      context: ./cut-tube-api
       dockerfile: Dockerfile.development
     restart: always
     env_file:
-      - ./cuttube-api/.env
+      - ./cut-tube-api/.env
     volumes:
-      - ./cuttube-api/src:/home/app/src
+      - ./cut-tube-api/src:/home/app/src
     ports:
       - 5050:5050
     networks:
-      - cuttube-net
+      - cut-tube-net
 
-  cuttube-app:
+  cut-tube-app:
     build:
-      context: ./cuttube-app
+      context: ./cut-tube-app
       dockerfile: Dockerfile.development
     restart: always
     env_file:
-      - ./cuttube-app/.env
+      - ./cut-tube-app/.env
     volumes:
-      - ./cuttube-app:/home/app
+      - ./cut-tube-app:/home/app
       - /home/app/node_modules
     depends_on:
-      - cuttube-api
+      - cut-tube-api
     ports:
       - "3000:3000"
     networks:
-     - cuttube-net
+      - cut-tube-net
     tty: true
 
 networks:
-  cuttube-net:
+  cut-tube-net:

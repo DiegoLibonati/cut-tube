@@ -1,4 +1,4 @@
-# CutTube
+# Cut Tube
 
 ## Educational Purpose
 
@@ -9,7 +9,7 @@ The main goal is to explore and demonstrate best practices, patterns, and techno
 ## Getting Started
 
 1. Clone the repository with `git clone "repository link"`
-2. Join to `cuttube-app` folder and execute: `npm install` or `yarn install` in the terminal
+2. Join to `cut-tube-app` folder and execute: `npm install` or `yarn install` in the terminal
 3. Go to the previous folder and execute: `docker-compose -f dev.docker-compose.yml build --no-cache` in the terminal
 4. Once built, you must execute the command: `docker-compose -f dev.docker-compose.yml up --force-recreate` in the terminal
 
@@ -17,14 +17,20 @@ NOTE: You have to be standing in the folder containing the: `dev.docker-compose.
 
 ### Pre-Commit for Development (Python)
 
-NOTE: Install **pre-commit** inside: `cuttube-api` folder.
+NOTE: Install **pre-commit** inside: `cut-tube-api` folder.
 
 1. Once you're inside the virtual environment, let's install the hooks specified in the pre-commit. Execute: `pre-commit install`
 2. Now every time you try to commit, the pre-commit lint will run. If you want to do it manually, you can run the command: `pre-commit run --all-files`
 
 ## Description
 
-I made a web application that allows to clip youtube videos through a start and end time, passing a custom clip name and a link from video to clip.
+**Cut Tube** is a full-stack web application that lets you extract and download a specific segment from any YouTube video. Instead of downloading an entire video, you simply provide the YouTube URL, specify a start time and end time (in `HH:MM:SS` format), give the clip a custom filename, and Cut Tube handles the rest.
+
+Under the hood, the Flask backend fetches the best available video stream from YouTube using `pytubefix`, temporarily stores it on the server, and then uses `moviepy` to cut the exact segment you requested. The resulting `.mp4` clip is saved on the server and immediately made available for download through the browser.
+
+The React + TypeScript frontend guides you through the whole process with a clean, responsive form. Once the clip is ready, you are taken to a result view where you can download it to your device or delete it from the server once you no longer need it. The UI adapts to different screen sizes and provides real-time feedback during processing via a loading state managed with Redux.
+
+The main use case is saving short highlights, tutorial excerpts, or any meaningful moment from a YouTube video without needing to keep the full original file. The workflow is entirely self-contained: clip, download, delete — no accounts, no third-party storage, no external dependencies beyond the YouTube URL itself.
 
 ## Technologies used
 
@@ -125,11 +131,7 @@ pytest-xdist==3.5.0
 
 ## Portfolio Link
 
-[`https://www.diegolibonati.com.ar/#/project/CutTube`](https://www.diegolibonati.com.ar/#/project/CutTube)
-
-## Video
-
-https://github.com/DiegoLibonati/CutTube/assets/99032604/44d38dd8-bf66-42b0-9240-053b705d2e70
+[`https://www.diegolibonati.com.ar/#/project/cut-tube`](https://www.diegolibonati.com.ar/#/project/cut-tube)
 
 ## Testing
 
@@ -146,7 +148,7 @@ npm run test:coverage
 
 ### Backend
 
-1. Join to the correct path of the clone and join to: `cuttube-api`
+1. Join to the correct path of the clone and join to: `cut-tube-api`
 2. Execute: `python -m venv venv`
 3. Execute in Windows: `venv\Scripts\activate`
 4. Execute: `pip install -r requirements.txt`
@@ -219,7 +221,7 @@ PORT=5050
 VITE_API_URL=http://host.docker.internal:5000
 ```
 
-### **CutTube Endpoints API**
+### **Cut Tube Endpoints API**
 
 - **Endpoint Name**: Alive
 - **Endpoint Route**: /api/v1/cut/alive
@@ -283,5 +285,5 @@ VITE_API_URL=http://host.docker.internal:5000
 ### [SERVER] - CVE-2026-25990 / GHSA-cfh3-3jmp-rvhc — Pillow out-of-bounds write (High)
 
 pillow 10.4.0 (pulled in transitively by moviepy) is affected by an out-of-bounds write vulnerability triggered when loading specially crafted PSD image files. The fix is available in pillow 12.1.1.
-This vulnerability does not affect this project in practice. CutTube only processes video streams downloaded from YouTube and never opens or accepts PSD files. The attack vector is not reachable through any code path in this API.
+This vulnerability does not affect this project in practice. Cut Tube only processes video streams downloaded from YouTube and never opens or accepts PSD files. The attack vector is not reachable through any code path in this API.
 Upgrading Pillow to 12.1.1 is blocked by moviepy==2.1.1, which declares pillow<12.0 as a dependency constraint. This will be resolved once moviepy releases a version that lifts that cap.

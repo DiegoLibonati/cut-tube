@@ -1,0 +1,21 @@
+{
+  "name": "Cut Tube",
+  "short_name": "Cut Tube",
+  "description": "Cut Tube is a full-stack web application that lets you extract and download a specific segment from any YouTube video.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#ffffff",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
