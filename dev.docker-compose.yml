@@ -7,7 +7,7 @@ services:
     env_file:
       - ./cut-tube-api/.env
     volumes:
-      - ./cut-tube-api/src:/home/app/src
+      - ./cut-tube-api:/home/app
     ports:
       - 5050:5050
     networks:
