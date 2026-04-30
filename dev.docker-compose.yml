@@ -17,7 +17,7 @@ services:
     build:
       context: ./cut-tube-app
       dockerfile: Dockerfile.development
-    restart: always
+    restart: unless-stopped
     env_file:
       - ./cut-tube-app/.env
     volumes:
@@ -29,6 +29,7 @@ services:
       - "3000:3000"
     networks:
       - cut-tube-net
+    stdin_open: true
     tty: true
 
 networks:

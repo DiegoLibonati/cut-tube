@@ -24,15 +24,17 @@ ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 ENV TMPDIR=/home/app/tmp 
 
-COPY --from=builder /install /usr/local
-COPY . .
-
 RUN useradd -m appuser \
     && mkdir -p /home/app/src/assets/download \
     && mkdir -p /home/app/src/assets/clips \
     && mkdir -p /home/app/tmp \
     && chown -R appuser:appuser /home/app
 
+COPY --from=builder /install /usr/local
+COPY --chown=appuser:appuser . .
+
 USER appuser
+
+EXPOSE 5050
 
 CMD ["gunicorn", "-c", "src/configs/gunicorn_config.py", "wsgi:app"]
