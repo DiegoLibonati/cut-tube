@@ -5,13 +5,19 @@ services:
       dockerfile: Dockerfile.production
     restart: always
     ports:
-      - "80:80"
+      - 3000:8080
     env_file:
       - ./cut-tube-app/.env
     networks:
       - net-cut-tube
     depends_on:
       - cut-tube-api
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
 
   cut-tube-api:
     build:
@@ -19,7 +25,7 @@ services:
       dockerfile: Dockerfile.production
     restart: always
     expose:
-      - "5050"
+      - 5050:5050
     env_file: ./cut-tube-api/.env
     networks:
       - net-cut-tube
