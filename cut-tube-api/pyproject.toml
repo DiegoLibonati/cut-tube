@@ -1,5 +1,5 @@
 [project]
-name = "cut-tube"
+name = "cut-tube-api"
 version = "1.0.0"
 description = "Cut Tube is a full-stack web application that lets you extract and download a specific segment from any YouTube video."
 requires-python = ">=3.11"
