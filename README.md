@@ -6,22 +6,6 @@ This project was created primarily for **educational and learning purposes**.
 While it is well-structured and could technically be used in production, it is **not intended for commercialization**.  
 The main goal is to explore and demonstrate best practices, patterns, and technologies in software development.
 
-## Getting Started
-
-1. Clone the repository with `git clone "repository link"`
-2. Join to `cut-tube-app` folder and execute: `npm install` or `yarn install` in the terminal
-3. Go to the previous folder and execute: `docker-compose -f dev.docker-compose.yml build --no-cache` in the terminal
-4. Once built, you must execute the command: `docker-compose -f dev.docker-compose.yml up --force-recreate` in the terminal
-
-NOTE: You have to be standing in the folder containing the: `dev.docker-compose.yml` and you need to install `Docker Desktop` if you are in Windows.
-
-### Pre-Commit for Development (Python)
-
-NOTE: Install **pre-commit** inside: `cut-tube-api` folder.
-
-1. Once you're inside the virtual environment, let's install the hooks specified in the pre-commit. Execute: `pre-commit install`
-2. Now every time you try to commit, the pre-commit lint will run. If you want to do it manually, you can run the command: `pre-commit run --all-files`
-
 ## Description
 
 **Cut Tube** is a full-stack web application that lets you extract and download a specific segment from any YouTube video. Instead of downloading an entire video, you simply provide the YouTube URL, specify a start time and end time (in `HH:MM:SS` format), give the clip a custom filename, and Cut Tube handles the rest.
@@ -34,24 +18,30 @@ The main use case is saving short highlights, tutorial excerpts, or any meaningf
 
 ## Technologies used
 
+The stack is split between a React frontend, a Flask backend, and a containerized deployment layer.
+
+### Frontend
+
 1. React JS
-2. Typescript
+2. TypeScript
 3. Tailwind CSS
 4. CSS3
 5. HTML5
 6. Vite
 
-BackEnd:
+### Backend
 
 1. Python -> Flask
 
-Deploy:
+### Deploy
 
 1. Docker
 2. Nginx
 3. Gunicorn
 
 ## Libraries used
+
+The exact dependencies pinned for each side of the project are listed below.
 
 ### Frontend
 
@@ -130,76 +120,28 @@ pytest-timeout==2.3.1
 pytest-xdist==3.5.0
 ```
 
-## Portfolio Link
+## Getting Started
 
-[`https://www.diegolibonati.com.ar/#/project/cut-tube`](https://www.diegolibonati.com.ar/#/project/cut-tube)
+With the dependencies in mind, the following steps will get the full stack running locally via Docker.
 
-## Testing
+1. Clone the repository with `git clone "repository link"`
+2. Copy `.env.example.dev` to `.env` so the containers pick up the required configuration (the env keys are documented in the next section).
+3. Join to `cut-tube-app` folder and execute: `npm install` or `yarn install` in the terminal
+4. Go to the previous folder and execute: `docker-compose -f dev.docker-compose.yml build --no-cache` in the terminal
+5. Once built, you must execute the command: `docker-compose -f dev.docker-compose.yml up --force-recreate` in the terminal
 
-### Frontend
+NOTE: You have to be standing in the folder containing the: `dev.docker-compose.yml` and you need to install `Docker Desktop` if you are in Windows.
 
-1. Navigate to the project folder
-2. Execute: `npm test`
+### Pre-Commit for Development (Python)
 
-For coverage report:
+NOTE: Install **pre-commit** inside: `cut-tube-api` folder.
 
-```bash
-npm run test:coverage
-```
+1. Once you're inside the virtual environment, let's install the hooks specified in the pre-commit. Execute: `pre-commit install`
+2. Now every time you try to commit, the pre-commit lint will run. If you want to do it manually, you can run the command: `pre-commit run --all-files`
 
-### Backend
+## Env Keys
 
-1. Join to the correct path of the clone and join to: `cut-tube-api`
-2. Execute: `python -m venv venv`
-3. Execute in Windows: `venv\Scripts\activate`
-4. Execute: `pip install -r requirements.txt`
-5. Execute: `pip install -r requirements.test.txt`
-6. Execute: `pytest --log-cli-level=INFO`
-
-## Security Audit (Python)
-
-You can check your dependencies for known vulnerabilities using **pip-audit**.
-
-1. Go to the repository folder
-2. Activate your virtual environment
-3. Execute: `pip install -r requirements.dev.txt`
-4. Execute: `pip-audit -r requirements.txt`
-
-## Security Audit (Frontend)
-
-### npm audit
-
-Check for vulnerabilities in dependencies:
-
-```bash
-npm audit
-```
-
-### React Doctor (Frontend)
-
-Run a health check on the project (security, performance, dead code, architecture):
-
-```bash
-npm run doctor
-```
-
-Use `--verbose` to see specific files and line numbers:
-
-```bash
-npm run doctor -- --verbose
-```
-
-## Documentation API
-
-### **Version**
-
-```
-API VERSION: 0.0.2
-README UPDATED: 01/02/2026
-AUTHOR: Diego Libonati
-```
-
-### **Env Keys**
+The application reads its configuration from these environment variables.
 
 1. `TZ`: Refers to the timezone setting for the container.
 2. `VITE_API_URL`: Refers to the base URL of the backend API the frontend consumes.
@@ -220,6 +162,18 @@ PORT=5050
 # Frontend
 
 VITE_API_URL=http://host.docker.internal:5000
+```
+
+## Documentation API
+
+Once the stack is running and pointed at the configured `VITE_API_URL`, the following endpoints are exposed by the Flask backend.
+
+### **Version**
+
+```
+API VERSION: 0.0.2
+README UPDATED: 01/02/2026
+AUTHOR: Diego Libonati
 ```
 
 ### **Cut Tube Endpoints API**
@@ -281,10 +235,77 @@ VITE_API_URL=http://host.docker.internal:5000
 }
 ```
 
+## Testing
+
+With the API contract in mind, both sides of the project ship their own test suites.
+
+### Frontend
+
+1. Navigate to the project folder
+2. Execute: `npm test`
+
+For coverage report:
+
+```bash
+npm run test:coverage
+```
+
+### Backend
+
+1. Join to the correct path of the clone and join to: `cut-tube-api`
+2. Execute: `python -m venv venv`
+3. Execute in Windows: `venv\Scripts\activate`
+4. Execute: `pip install -r requirements.txt`
+5. Execute: `pip install -r requirements.test.txt`
+6. Execute: `pytest --log-cli-level=INFO`
+
+## Security Audit
+
+In addition to functional tests, both sides of the project can be audited for known dependency vulnerabilities.
+
+### Backend (Python)
+
+You can check your dependencies for known vulnerabilities using **pip-audit**.
+
+1. Go to the repository folder
+2. Activate your virtual environment
+3. Execute: `pip install -r requirements.dev.txt`
+4. Execute: `pip-audit -r requirements.txt`
+
+### Frontend
+
+#### npm audit
+
+Check for vulnerabilities in dependencies:
+
+```bash
+npm audit
+```
+
+#### React Doctor
+
+Run a health check on the project (security, performance, dead code, architecture):
+
+```bash
+npm run doctor
+```
+
+Use `--verbose` to see specific files and line numbers:
+
+```bash
+npm run doctor -- --verbose
+```
+
 ## Known Issues
+
+Issues surfaced by the audits above that are tracked but not yet resolved are documented here.
 
 ### [SERVER] - CVE-2026-25990 / GHSA-cfh3-3jmp-rvhc — Pillow out-of-bounds write (High)
 
 pillow 10.4.0 (pulled in transitively by moviepy) is affected by an out-of-bounds write vulnerability triggered when loading specially crafted PSD image files. The fix is available in pillow 12.1.1.
 This vulnerability does not affect this project in practice. Cut Tube only processes video streams downloaded from YouTube and never opens or accepts PSD files. The attack vector is not reachable through any code path in this API.
 Upgrading Pillow to 12.1.1 is blocked by moviepy==2.1.1, which declares pillow<12.0 as a dependency constraint. This will be resolved once moviepy releases a version that lifts that cap.
+
+## Portfolio Link
+
+[`https://www.diegolibonati.com.ar/#/project/cut-tube`](https://www.diegolibonati.com.ar/#/project/cut-tube)
