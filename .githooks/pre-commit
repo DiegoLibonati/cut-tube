@@ -1,6 +1,6 @@
 #!/bin/sh
 # Pre-commit hook for Cut Tube monorepo.
-# Runs the Python pre-commit (ruff/mypy) when cut-tube-api files are staged.
+# Runs the Python pre-commit (ruff) and mypy when cut-tube-api files are staged.
 # Runs lint-staged when cut-tube-app files are staged.
 
 REPO_ROOT="$(git rev-parse --show-toplevel)"
@@ -12,8 +12,9 @@ APP_FILES=$(echo "$STAGED_FILES" | grep "^cut-tube-app/")
 EXIT_CODE=0
 
 if [ -n "$API_FILES" ]; then
-    echo "[pre-commit] Running ruff checks for cut-tube-api..."
     INSTALL_PYTHON="$REPO_ROOT/cut-tube-api/venv/Scripts/python.exe"
+
+    echo "[pre-commit] Running ruff for cut-tube-api..."
     if [ -x "$INSTALL_PYTHON" ]; then
         "$INSTALL_PYTHON" -mpre_commit run \
             --config="$REPO_ROOT/cut-tube-api/.pre-commit-config.yaml" \
@@ -27,6 +28,16 @@ if [ -n "$API_FILES" ]; then
         exit 1
     fi
     EXIT_CODE=$((EXIT_CODE + $?))
+
+    echo "[pre-commit] Running mypy for cut-tube-api..."
+    if [ -x "$INSTALL_PYTHON" ]; then
+        "$INSTALL_PYTHON" -m mypy \
+            --config-file="$REPO_ROOT/cut-tube-api/pyproject.toml" \
+            "$REPO_ROOT/cut-tube-api"
+        EXIT_CODE=$((EXIT_CODE + $?))
+    else
+        echo '[pre-commit] venv python not found, skipping mypy.' 1>&2
+    fi
 fi
 
 if [ -n "$APP_FILES" ]; then
