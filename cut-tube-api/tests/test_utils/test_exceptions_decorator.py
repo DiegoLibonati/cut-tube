@@ -1,7 +1,7 @@
 import pytest
 from pydantic import BaseModel, ValidationError
 
-from src.utils.exceptions import ValidationAPIError
+from src.utils.exceptions import InternalAPIError, ValidationAPIError
 from src.utils.exceptions_decorator import exceptions_decorator
 
 
@@ -100,21 +100,43 @@ class TestExceptionsDecorator:
         assert isinstance(details, list)
         assert len(details) > 0
 
-    def test_does_not_catch_value_error(self) -> None:
+    def test_converts_value_error_to_internal_api_error(self) -> None:
         @exceptions_decorator
         def fn() -> None:
             raise ValueError("some error")
 
-        with pytest.raises(ValueError):
+        with pytest.raises(InternalAPIError):
             fn()
 
-    def test_does_not_catch_runtime_error(self) -> None:
+    def test_converts_runtime_error_to_internal_api_error(self) -> None:
         @exceptions_decorator
         def fn() -> None:
             raise RuntimeError("runtime")
 
-        with pytest.raises(RuntimeError):
+        with pytest.raises(InternalAPIError):
             fn()
+
+    def test_raised_internal_api_error_has_internal_server_code(self) -> None:
+        @exceptions_decorator
+        def fn() -> None:
+            raise ValueError("boom")
+
+        with pytest.raises(InternalAPIError) as exc_info:
+            fn()
+
+        assert exc_info.value.code == "ERROR_INTERNAL_SERVER"
+
+    def test_raised_internal_api_error_preserves_original_cause(self) -> None:
+        original = RuntimeError("root cause")
+
+        @exceptions_decorator
+        def fn() -> None:
+            raise original
+
+        with pytest.raises(InternalAPIError) as exc_info:
+            fn()
+
+        assert exc_info.value.__cause__ is original
 
     def test_does_not_catch_validation_api_error(self) -> None:
         @exceptions_decorator
