@@ -137,13 +137,19 @@ class TestDownloadClip:
         assert data["code"] == "NOT_FOUND_PATH"
 
     def test_returns_200_when_file_exists(self, client: FlaskClient) -> None:
-        with patch("src.controllers.cut_controller.FileService.path_exists", return_value=True), patch("src.controllers.cut_controller.send_file") as mock_send:
+        with (
+            patch("src.controllers.cut_controller.FileService.path_exists", return_value=True),
+            patch("src.controllers.cut_controller.send_file") as mock_send,
+        ):
             mock_send.return_value = Response("file_content", status=200, mimetype="video/mp4")
             response = client.get("/api/v1/cut/test_clip/download")
         assert response.status_code == 200
 
     def test_send_file_called_with_mp4_mimetype(self, client: FlaskClient) -> None:
-        with patch("src.controllers.cut_controller.FileService.path_exists", return_value=True), patch("src.controllers.cut_controller.send_file") as mock_send:
+        with (
+            patch("src.controllers.cut_controller.FileService.path_exists", return_value=True),
+            patch("src.controllers.cut_controller.send_file") as mock_send,
+        ):
             mock_send.return_value = Response("file_content", status=200, mimetype="video/mp4")
             client.get("/api/v1/cut/test_clip/download")
 

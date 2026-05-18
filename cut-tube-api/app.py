@@ -1,15 +1,23 @@
 import importlib
 
-from flask import Flask
+from flask import Flask, jsonify
+from werkzeug.exceptions import HTTPException
 
 from src.blueprints.routes import register_routes
 from src.configs.logger_config import setup_logger
+from src.constants.codes import CODE_ERROR_INTERNAL_SERVER, CODE_NOT_FOUND_ROUTE
+from src.constants.messages import MESSAGE_ERROR_INTERNAL_SERVER, MESSAGE_NOT_FOUND_ROUTE
 from src.utils.exceptions import BaseAPIError
 
 logger = setup_logger()
 
+ALLOWED_CONFIGS = {"development", "production", "testing"}
 
-def create_app(config_name="development") -> None:
+
+def create_app(config_name="development") -> Flask:
+    if config_name not in ALLOWED_CONFIGS:
+        raise ValueError(f"Invalid config_name: {config_name!r}. Allowed values are: {sorted(ALLOWED_CONFIGS)}")
+
     app = Flask(__name__)
 
     config_module = importlib.import_module(f"src.configs.{config_name}_config")
@@ -18,6 +26,28 @@ def create_app(config_name="development") -> None:
     @app.errorhandler(BaseAPIError)
     def handle_api_error(error: BaseAPIError):
         return error.flask_response()
+
+    @app.errorhandler(404)
+    def handle_not_found(error):
+        logger.warning("404 Not Found: %s", error)
+        return jsonify(
+            {
+                "code": CODE_NOT_FOUND_ROUTE,
+                "message": MESSAGE_NOT_FOUND_ROUTE,
+            }
+        ), 404
+
+    @app.errorhandler(Exception)
+    def handle_unexpected_exception(error: Exception):
+        if isinstance(error, HTTPException):
+            return error
+        logger.exception("Unhandled exception: %s", error)
+        return jsonify(
+            {
+                "code": CODE_ERROR_INTERNAL_SERVER,
+                "message": MESSAGE_ERROR_INTERNAL_SERVER,
+            }
+        ), 500
 
     register_routes(app)
     logger.info("Routes initialized successfully.")

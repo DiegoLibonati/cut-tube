@@ -1,4 +1,6 @@
 # ##### SUCCESS #####
+MESSAGE_SUCCESS_HEALTH = "The application is healthy."
+MESSAGE_SUCCESS_READY = "The application is ready to serve requests."
 MESSAGE_SUCCESS_CUT_VIDEO = "Video cutted."
 MESSAGE_SUCCESS_DELETE_CLIP = "Clip deleted."
 
@@ -18,4 +20,5 @@ MESSAGE_NOT_VALID_FIELDS = "Not valid fields."
 # ##### ALREADY_EXISTS #####
 
 # ##### NOT_FOUND #####
+MESSAGE_NOT_FOUND_ROUTE = "The requested route does not exist."
 MESSAGE_NOT_FOUND_PATH = "Not found path."

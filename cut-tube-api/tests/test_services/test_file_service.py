@@ -32,9 +32,11 @@ class TestRemoveFile:
         mock_remove.assert_called_once_with("/some/file.mp4")
 
     def test_propagates_os_error_when_file_missing(self) -> None:
-        with patch("src.services.file_service.os.remove", side_effect=FileNotFoundError("not found")):
-            with pytest.raises(FileNotFoundError):
-                FileService.remove_file("/missing/file.mp4")
+        with (
+            patch("src.services.file_service.os.remove", side_effect=FileNotFoundError("not found")),
+            pytest.raises(FileNotFoundError),
+        ):
+            FileService.remove_file("/missing/file.mp4")
 
 
 @pytest.mark.unit
@@ -58,7 +60,7 @@ class TestMakeDirs:
         _, kwargs = mock_makedirs.call_args
         assert kwargs.get("exist_ok") is False
 
-    def test_returns_makedirs_result(self) -> None:
+    def test_returns_none(self) -> None:
         with patch("src.services.file_service.os.makedirs", return_value=None) as _mock_makedirs:
-            result: bool = FileService.make_dirs("/folder")
+            result: None = FileService.make_dirs("/folder")
         assert result is None

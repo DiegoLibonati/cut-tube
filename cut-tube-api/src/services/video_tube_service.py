@@ -25,13 +25,13 @@ class VideoTubeService:
         self.__url = url
         self.__filename: str = filename
         self.__extension: str = extension
-        self.__name: str = None
+        self.__name: str | None = None
 
         self.__folder_download: str = folder_download
         self.__folder_clips: str = folder_clips
 
         self.__duration: int = 0
-        self.__stream: Stream = None
+        self.__stream: Stream | None = None
         self.__can_clip: bool = False
 
         self._generate_folders()
@@ -45,7 +45,7 @@ class VideoTubeService:
         return self.__filename
 
     @property
-    def name(self) -> str:
+    def name(self) -> str | None:
         return self.__name
 
     @property
@@ -147,7 +147,8 @@ def init() -> None:
     _, status = video.get_video_from_youtube()
 
     if not status:
-        return logging.info("Error 1")
+        logging.info("Error 1")
+        return
 
     video.generate_clip(start_time=start_clip, end_time=end_clip)
 

@@ -8,6 +8,11 @@ services:
       - ./cut-tube-api/.env
     volumes:
       - ./cut-tube-api:/home/app
+      - /home/app/venv
+      - /home/app/.pytest_cache
+      - /home/app/.ruff_cache
+      - /home/app/.mypy_cache
+      - /home/app/__pycache__
     ports:
       - 5050:5050
     networks:

@@ -6,3 +6,13 @@ repos:
         args: [--fix]
       - id: ruff-format
       
+  - repo: local
+    hooks:
+      - id: mypy
+        name: mypy
+        language: system
+        entry: mypy
+        types: [python]
+        args: [--config-file=cut-tube-api/pyproject.toml, cut-tube-api]
+        pass_filenames: false
+        exclude: ^(cut-tube-api/tests/|cut-tube-api/venv/)

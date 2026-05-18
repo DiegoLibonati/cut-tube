@@ -1,10 +1,10 @@
 #!/bin/sh
 # Pre-commit hook for Cut Tube monorepo.
-# Runs the Python pre-commit (ruff) when cut-tube-api files are staged.
-# Runs husky/lint-staged when cut-tube-app files are staged.
+# Runs the Python pre-commit (ruff/mypy) when cut-tube-api files are staged.
+# Runs lint-staged when cut-tube-app files are staged.
 
 REPO_ROOT="$(git rev-parse --show-toplevel)"
-STAGED_FILES=$(git diff --cached --name-only)
+STAGED_FILES=$(git diff --cached --name-only --diff-filter=ACMR)
 
 API_FILES=$(echo "$STAGED_FILES" | grep "^cut-tube-api/")
 APP_FILES=$(echo "$STAGED_FILES" | grep "^cut-tube-app/")
@@ -30,8 +30,13 @@ if [ -n "$API_FILES" ]; then
 fi
 
 if [ -n "$APP_FILES" ]; then
-    echo "[pre-commit] Running husky/lint-staged for cut-tube-app..."
-    cd "$REPO_ROOT/cut-tube-app" && sh .husky/pre-commit
+    echo "[pre-commit] Running lint-staged for cut-tube-app..."
+    if command -v npx > /dev/null; then
+        (cd "$REPO_ROOT/cut-tube-app" && npx --no-install lint-staged)
+    else
+        echo '[pre-commit] `npx` not found. Did you install Node.js?' 1>&2
+        exit 1
+    fi
     EXIT_CODE=$((EXIT_CODE + $?))
 fi
 

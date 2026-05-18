@@ -1,0 +1,22 @@
+{
+  "recommendations": [
+    "ms-python.python",
+    "ms-python.vscode-pylance",
+    "ms-python.debugpy",
+    "ms-python.mypy-type-checker",
+    "charliermarsh.ruff",
+
+    "dbaeumer.vscode-eslint",
+    "esbenp.prettier-vscode",
+    "bradlc.vscode-tailwindcss",
+
+    "orta.vscode-jest",
+
+    "ms-azuretools.vscode-docker",
+
+    "editorconfig.editorconfig",
+    "redhat.vscode-yaml",
+    "tamasfe.even-better-toml",
+    "mikestead.dotenv"
+  ]
+}

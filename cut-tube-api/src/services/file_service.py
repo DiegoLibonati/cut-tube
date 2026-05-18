@@ -11,5 +11,5 @@ class FileService:
         return os.path.exists(path)
 
     @staticmethod
-    def make_dirs(path: str, exist_ok: bool = True) -> bool:
-        return os.makedirs(path, exist_ok=exist_ok)
+    def make_dirs(path: str, exist_ok: bool = True) -> None:
+        os.makedirs(path, exist_ok=exist_ok)

@@ -1,6 +1,7 @@
 import os
 
-from flask import Response, jsonify, request, send_file
+from flask import jsonify, request, send_file
+from flask.typing import ResponseReturnValue
 
 from src.constants.codes import (
     CODE_ERROR_VIDEO_TUBE_SERVICE,
@@ -25,11 +26,11 @@ from src.models.clip_model import ClipModel
 from src.services.file_service import FileService
 from src.services.video_tube_service import VideoTubeService
 from src.utils.exceptions import ConflictAPIError, NotFoundAPIError, ValidationAPIError
-from src.utils.exceptions_handler import exceptions_handler
+from src.utils.exceptions_decorator import exceptions_decorator
 
 
-@exceptions_handler
-def alive() -> Response:
+@exceptions_decorator
+def alive() -> ResponseReturnValue:
     response = {
         "message": "I am Alive!",
         "version_bp": "2.0.0",
@@ -40,8 +41,8 @@ def alive() -> Response:
     return jsonify(response), 200
 
 
-@exceptions_handler
-def clip_video(filename: str) -> Response:
+@exceptions_decorator
+def clip_video(filename: str) -> ResponseReturnValue:
     body = request.get_json()
 
     clip = ClipModel(filename=filename, **body)
@@ -75,8 +76,8 @@ def clip_video(filename: str) -> Response:
     return jsonify(response), 200
 
 
-@exceptions_handler
-def download_clip(filename: str) -> Response:
+@exceptions_decorator
+def download_clip(filename: str) -> ResponseReturnValue:
     if not filename:
         raise ValidationAPIError(code=CODE_NOT_VALID_FIELDS, message=MESSAGE_NOT_VALID_FIELDS)
 
@@ -97,8 +98,8 @@ def download_clip(filename: str) -> Response:
     )
 
 
-@exceptions_handler
-def remove_clip(filename: str) -> Response:
+@exceptions_decorator
+def remove_clip(filename: str) -> ResponseReturnValue:
     if not filename:
         raise ValidationAPIError(code=CODE_NOT_VALID_FIELDS, message=MESSAGE_NOT_VALID_FIELDS)
 

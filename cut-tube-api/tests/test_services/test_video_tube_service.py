@@ -192,9 +192,11 @@ class TestGenerateClip:
     def test_raises_assertion_when_cannot_clip(self, video_service: VideoTubeService) -> None:
         video_service._VideoTubeService__stream = MagicMock()
 
-        with patch.object(video_service, "download_stream"):
-            with pytest.raises(AssertionError, match="A clip still cannot be generated"):
-                video_service.generate_clip("00:00:10", "00:00:20")
+        with (
+            patch.object(video_service, "download_stream"),
+            pytest.raises(AssertionError, match="A clip still cannot be generated"),
+        ):
+            video_service.generate_clip("00:00:10", "00:00:20")
 
     def test_generates_clip_and_writes_file(self, video_service: VideoTubeService) -> None:
         video_service._VideoTubeService__stream = MagicMock()

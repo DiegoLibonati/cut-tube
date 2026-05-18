@@ -76,10 +76,10 @@ The exact dependencies pinned for each side of the project are listed below.
 "eslint-plugin-react-hooks": "^5.0.0"
 "eslint-plugin-react-refresh": "^0.4.0"
 "globals": "^15.0.0"
-"husky": "^9.0.0"
 "jest": "^30.3.0"
 "jest-environment-jsdom": "^30.3.0"
 "lint-staged": "^15.0.0"
+"msw": "2.10.4"
 "prettier": "^3.0.0"
 "ts-jest": "^29.4.6"
 "autoprefixer": "^10.4.18"
@@ -87,33 +87,35 @@ The exact dependencies pinned for each side of the project are listed below.
 "tailwindcss": "^3.4.1"
 "typescript": "^5.2.2"
 "typescript-eslint": "^8.0.0"
+"undici": "^7.25.0"
 "vite": "^7.1.6"
 ```
 
 ### Backend
 
-#### Requirements.txt
+#### Runtime (`[project.dependencies]`)
 
 ```
-pytubefix==8.8.2
+pytubefix==10.7.2
 flask==3.1.3
-moviepy==2.1.1
+moviepy==2.2.1
 pydantic==2.11.9
 gunicorn==23.0.0
 ```
 
-#### Requirements.dev.txt
+#### Dev (`[project.optional-dependencies]` dev)
 
 ```
 pre-commit==4.3.0
 pip-audit==2.7.3
 ruff==0.11.12
+mypy==1.13.0
 ```
 
-#### Requirements.test.txt
+#### Test (`[project.optional-dependencies]` test)
 
 ```
-pytest==8.4.2
+pytest==9.0.3
 pytest-env==1.1.5
 pytest-cov==4.1.0
 pytest-timeout==2.3.1
@@ -148,6 +150,7 @@ The application reads its configuration from these environment variables.
 3. `HOST`: Refers to the network interface where the backend API listens (e.g., 0.0.0.0 to allow external connections).
 4. `PORT`: Refers to the port on which the backend API is exposed.
 5. `WORK_DIR`: Refers to the docker working path.
+6. `MAX_CONTENT_LENGTH`: Refers to the maximum allowed size in bytes for an incoming request body (defaults to 1 MiB).
 
 ```
 # Backend
@@ -158,6 +161,7 @@ WORK_DIR=/home/app
 
 HOST=0.0.0.0
 PORT=5050
+MAX_CONTENT_LENGTH=1048576
 
 # Frontend
 
@@ -171,10 +175,19 @@ Once the stack is running and pointed at the configured `VITE_API_URL`, the foll
 ### **Version**
 
 ```
-API VERSION: 0.0.2
-README UPDATED: 01/02/2026
+API VERSION: 0.0.3
+README UPDATED: 18/05/2026
 AUTHOR: Diego Libonati
 ```
+
+### **Health Endpoints API**
+
+- **Endpoint Name**: Health
+- **Endpoint Route**: /api/v1/health/
+- **Endpoint Method**: GET
+- **Endpoint Fn**: This endpoint reports that the application is up and serving requests. Used by the production container `HEALTHCHECK`.
+
+---
 
 ### **Cut Tube Endpoints API**
 
@@ -255,9 +268,111 @@ npm run test:coverage
 1. Join to the correct path of the clone and join to: `cut-tube-api`
 2. Execute: `python -m venv venv`
 3. Execute in Windows: `venv\Scripts\activate`
-4. Execute: `pip install -r requirements.txt`
-5. Execute: `pip install -r requirements.test.txt`
-6. Execute: `pytest --log-cli-level=INFO`
+4. Execute: `pip install -e ".[test]"`
+5. Execute: `pytest --log-cli-level=INFO`
+
+## Continuous Integration
+
+The repository ships with a **GitHub Actions** pipeline defined in [`.github/workflows/ci.yml`](.github/workflows/ci.yml). It runs automatically on every `push` and `pull_request` targeting the `main` branch and validates both sides of the monorepo plus the Docker images, in that order.
+
+### Pipeline overview
+
+```
+                ┌── PR or push to main ──┐
+                ▼                        ▼
+        ┌──────────────────────────┐
+        │  backend-lint-and-audit  │   ruff · ruff format · mypy · pip-audit
+        └────────────┬─────────────┘
+                     ▼
+        ┌──────────────────────────┐
+        │      backend-test        │   pytest
+        └────────────┬─────────────┘
+                     ▼
+        ┌──────────────────────────┐
+        │ frontend-lint-and-audit  │   eslint · tsc --noEmit · npm audit
+        └────────────┬─────────────┘
+                     ▼
+        ┌──────────────────────────┐
+        │      frontend-test       │   jest + MSW
+        └────────────┬─────────────┘
+                     ▼
+        ┌──────────────────────────┐
+        │      frontend-build      │   tsc + vite build
+        └────────────┬─────────────┘
+                     ▼
+        ┌─────────────────────────────────────────┐
+        │      docker-build (matrix, parallel)    │
+        │  cut-tube-api:dev   cut-tube-api:prod   │
+        │  cut-tube-app:dev   cut-tube-app:prod   │
+        └─────────────────────────────────────────┘
+```
+
+### Validation jobs (run on every PR and push)
+
+1. **`backend-lint-and-audit`** — sets up Python from `cut-tube-api/.python-version`, installs `[dev]` extras and runs `ruff check`, `ruff format --check`, `mypy --config-file=pyproject.toml .` and `pip-audit --skip-editable`.
+2. **`backend-test`** — installs `[test]` extras and runs `python -m pytest --tb=short`.
+3. **`frontend-lint-and-audit`** — sets up Node from `cut-tube-app/.nvmrc`, runs `npm ci --ignore-scripts`, then `npm run lint`, `npm run type-check` and `npm audit --audit-level=high` (informational, `continue-on-error`).
+4. **`frontend-test`** — `npm run test` (Jest + Testing Library + MSW with the `undici` polyfills).
+5. **`frontend-build`** — `npm run build` (`tsc -p tsconfig.app.json && vite build`).
+6. **`docker-build`** — `docker/build-push-action` runs in a matrix that builds the four images (api dev/prod and app dev/prod) **in parallel**. `fail-fast: false` so one failing image does not cancel the others. Images are built but **not pushed**.
+
+> **Note:** the `--ignore-scripts` flag on `npm ci` skips the `prepare` hook that wires `core.hooksPath` to `.githooks/`. CI runners do not need the local pre-commit hooks installed.
+
+### Skipping CI
+
+To push a change to `main` without running the workflow (e.g. fixing a typo in the README), append GitHub's standard marker `[skip ci]` to the commit message:
+
+```bash
+git commit -m "docs: fix typo in README [skip ci]"
+```
+
+### Running the same checks locally
+
+**Backend** (from `cut-tube-api/`, with the virtual environment activated):
+
+```bash
+pip install -e ".[dev]" ".[test]"
+
+ruff check .
+ruff format --check .
+mypy --config-file=pyproject.toml .
+pip-audit --skip-editable \
+  --ignore-vuln GHSA-cfh3-3jmp-rvhc \
+  --ignore-vuln GHSA-whj4-6x5x-4v2j \
+  --ignore-vuln GHSA-wjx4-4jcj-g98j \
+  --ignore-vuln GHSA-5xmw-vc9v-4wf2 \
+  --ignore-vuln GHSA-r73j-pqj5-w3x7 \
+  --ignore-vuln GHSA-pwv6-vv43-88gr
+python -m pytest --tb=short
+```
+
+**Frontend** (from `cut-tube-app/`):
+
+```bash
+npm ci
+
+npm run lint
+npm run type-check
+npm run test
+npm run build
+```
+
+**Docker images** (from the repo root):
+
+```bash
+docker build -f cut-tube-api/Dockerfile.development -t cut-tube-api:dev cut-tube-api
+docker build -f cut-tube-api/Dockerfile.production  -t cut-tube-api:prod cut-tube-api
+docker build -f cut-tube-app/Dockerfile.development -t cut-tube-app:dev cut-tube-app
+docker build -f cut-tube-app/Dockerfile.production  -t cut-tube-app:prod cut-tube-app
+```
+
+### Where the build outputs live
+
+| Output | Location |
+|---|---|
+| Validation logs (lint, tests, build) | **Actions** tab on GitHub |
+| Docker images | Ephemeral, inside the runner (not pushed to any registry) |
+| Coverage reports (when run locally) | `cut-tube-api/htmlcov/`, `cut-tube-app/coverage/` |
 
 ## Security Audit
 
@@ -269,7 +384,7 @@ You can check your dependencies for known vulnerabilities using **pip-audit**.
 
 1. Go to the repository folder
 2. Activate your virtual environment
-3. Execute: `pip install -r requirements.dev.txt`
+3. Execute: `pip install -e ".[dev]"`
 4. Execute: `pip-audit -r requirements.txt`
 
 ### Frontend
@@ -300,11 +415,24 @@ npm run doctor -- --verbose
 
 Issues surfaced by the audits above that are tracked but not yet resolved are documented here.
 
-### [SERVER] - CVE-2026-25990 / GHSA-cfh3-3jmp-rvhc — Pillow out-of-bounds write (High)
+### [SERVER] — Pillow vulnerabilities (transitive dependency via moviepy)
 
-pillow 10.4.0 (pulled in transitively by moviepy) is affected by an out-of-bounds write vulnerability triggered when loading specially crafted PSD image files. The fix is available in pillow 12.1.1.
-This vulnerability does not affect this project in practice. Cut Tube only processes video streams downloaded from YouTube and never opens or accepts PSD files. The attack vector is not reachable through any code path in this API.
-Upgrading Pillow to 12.1.1 is blocked by moviepy==2.1.1, which declares pillow<12.0 as a dependency constraint. This will be resolved once moviepy releases a version that lifts that cap.
+`pillow 11.3.0` is pulled in transitively by `moviepy==2.2.1` and is currently flagged by `pip-audit` with the following advisories:
+
+| Advisory | Fixed in |
+|---|---|
+| GHSA-cfh3-3jmp-rvhc | 12.1.1 |
+| GHSA-whj4-6x5x-4v2j | 12.2.0 |
+| GHSA-wjx4-4jcj-g98j | 12.2.0 |
+| GHSA-5xmw-vc9v-4wf2 | 12.2.0 |
+| GHSA-r73j-pqj5-w3x7 | 12.2.0 |
+| GHSA-pwv6-vv43-88gr | 12.2.0 |
+
+None of these vulnerabilities are reachable through any code path in Cut Tube. The API only processes video streams downloaded from YouTube; Pillow is loaded transitively by `moviepy` for internal frame manipulation and is **never** exposed to user-supplied images, archives, or arbitrary file paths. The known attack vectors (crafted PSD / ICO / EPS / TGA and similar image files) cannot be reached from any endpoint.
+
+Upgrading Pillow to 12.x is blocked by `moviepy==2.2.1`, which declares `pillow<12.0` as a dependency constraint. This will be resolved automatically once moviepy releases a version that lifts that cap.
+
+To keep CI auditable while tracking these accepted advisories explicitly, both the `backend-lint-and-audit` job in [`.github/workflows/ci.yml`](.github/workflows/ci.yml) and the local example below pass each advisory ID through `pip-audit --ignore-vuln`. Any **other** advisory (Pillow or otherwise) still fails the audit — the allowlist is intentionally narrow.
 
 ## Portfolio Link
 

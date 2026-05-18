@@ -1,9 +1,11 @@
 import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { configureStore } from "@reduxjs/toolkit";
+import { AxiosError } from "axios";
 import { Provider } from "react-redux";
 
 import type { RenderResult } from "@testing-library/react";
+import type { AxiosResponse } from "axios";
 import type { store } from "@/app/store";
 
 import CreateClipView from "@/views/CreateClipView/CreateClipView";
@@ -211,6 +213,66 @@ describe("CreateClipView", () => {
       await user.click(screen.getByRole("button", { name: "Submit clip creation" }));
       await waitFor(() => {
         expect(store.getState().ui.modal.open).toBe(true);
+      });
+    });
+
+    it("should show response data message when clipVideo throws an AxiosError", async () => {
+      const user = userEvent.setup();
+      const store = createTestStore();
+      const axiosError = new AxiosError("Request failed");
+      axiosError.response = {
+        data: { message: "Backend rejected the clip" },
+        status: 409,
+        statusText: "Conflict",
+        headers: {},
+        config: {} as AxiosResponse["config"],
+      };
+      mockClipVideo.mockRejectedValue(axiosError);
+      render(
+        <Provider store={store}>
+          <CreateClipView />
+        </Provider>
+      );
+      await user.type(screen.getByRole("textbox", { name: "Start Time" }), "00:00:10");
+      await user.type(screen.getByRole("textbox", { name: "End Time" }), "00:00:20");
+      await user.type(screen.getByRole("textbox", { name: "Clip Title" }), "my_clip");
+      await user.type(
+        screen.getByRole("textbox", { name: "YouTube Link" }),
+        "https://youtube.com/watch?v=abc123"
+      );
+      await user.click(screen.getByRole("button", { name: "Submit clip creation" }));
+      await waitFor(() => {
+        expect(store.getState().ui.modal.message).toBe("Backend rejected the clip");
+      });
+    });
+
+    it("should fall back to Error. when AxiosError response data has no message", async () => {
+      const user = userEvent.setup();
+      const store = createTestStore();
+      const axiosError = new AxiosError("Request failed");
+      axiosError.response = {
+        data: {},
+        status: 500,
+        statusText: "Internal Server Error",
+        headers: {},
+        config: {} as AxiosResponse["config"],
+      };
+      mockClipVideo.mockRejectedValue(axiosError);
+      render(
+        <Provider store={store}>
+          <CreateClipView />
+        </Provider>
+      );
+      await user.type(screen.getByRole("textbox", { name: "Start Time" }), "00:00:10");
+      await user.type(screen.getByRole("textbox", { name: "End Time" }), "00:00:20");
+      await user.type(screen.getByRole("textbox", { name: "Clip Title" }), "my_clip");
+      await user.type(
+        screen.getByRole("textbox", { name: "YouTube Link" }),
+        "https://youtube.com/watch?v=abc123"
+      );
+      await user.click(screen.getByRole("button", { name: "Submit clip creation" }));
+      await waitFor(() => {
+        expect(store.getState().ui.modal.message).toBe("Error.");
       });
     });
   });
